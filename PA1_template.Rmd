@@ -1,0 +1,102 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
+Hola compañeros este es mi trabajo en realidad pienso que dejarlo en español puede ser una buena idea.
+
+## Loading and preprocessing the data
+
+```{r cargardatos}
+datos <- read.csv(file = "activity.csv", header = TRUE)
+datos$date <- as.Date(datos$date)
+```
+
+A continuacion veremos cual es el total de pasos tomados por dia y su media
+## What is mean total number of steps taken per day?
+```{r histograma, fig.height=5,fig.width=4}
+totalpasos <- tapply(datos$steps, datos$date, sum)
+head(totalpasos)
+hist(totalpasos)
+```
+
+La media y mediana de la cantidad de pasos al dia son
+
+```{r media}
+media1 <- mean(totalpasos, na.rm = TRUE)
+mediana1 <- median(totalpasos, na.rm = TRUE)
+media1
+mediana1
+```
+
+## What is the average daily activity pattern?
+
+```{r promintervalo, fig.height=5,fig.width=4}
+pasos_tiempo <- tapply(datos$steps, datos$interval, mean, na.rm = TRUE)
+plot(x= names(pasos_tiempo),y=pasos_tiempo, type = "l", xlab = "Time", ylab = "Steps")
+```
+
+El valor maximo se encuentra en 
+
+```{r valor maximo}
+maximo <- which.max(pasos_tiempo)
+tmaximo <- cbind(names(pasos_tiempo[maximo]), pasos_tiempo[maximo])
+colnames(tmaximo) <- c("Time", "Steps")
+rownames(tmaximo) <- ""
+tmaximo
+```
+
+## Imputing missing values
+El numero de NA´s en el conjunto de datos es:
+```{r}
+sum(is.na(datos$steps))
+```
+
+Para imputar los datos entonces tomaremos la media de los datos y se la asignaremos a los faltantes
+
+```{r fig.height=5,fig.width=5}
+datos2 <- datos
+datos2$steps[which(is.na(datos2$steps))] <- mean(datos2$steps, na.rm = TRUE)
+totalpasos2 <- tapply(datos2$steps, datos2$date, sum)
+head(totalpasos2)
+hist(totalpasos2)
+```
+
+Las nuevas media y mediana son
+```{r}
+media2 <- mean(totalpasos2, na.rm = TRUE)
+mediana2 <- median(totalpasos2, na.rm = TRUE)
+difmean <- media2 - media1
+difmedian <- mediana2 - mediana1
+```
+
+Vemos que la diferencia es positiva y que la media aumenta en `r difmean` y la mediana en `r difmedian`
+The impact is minimal in the mean and median of the steps.
+
+## Are there differences in activity patterns between weekdays and weekends?
+Se determino si el registro es un dia entre semana o un dia de fin de semana
+
+```{r}
+datos2$dias <- weekdays(datos2$date)
+datos2$dias[which(datos2$dias=="sábado" | datos2$dias=="domingo")] <- "weekend"
+datos2$dias[which(datos2$dias!="weekend")] <- "weekday"
+
+```
+
+Ahora veremos si hay diferencia en la tendencia
+
+```{r fig.height=4,fig.width=8}
+
+week <- datos2[datos2$dias=="weekday", ]
+weekend <- datos2[datos2$dias=="weekend", ]
+
+pasos_week <- tapply(week$steps, week$interval, mean, na.rm = TRUE)
+pasos_weekend <- tapply(weekend$steps, weekend$interval, mean, na.rm = TRUE)
+
+par(mfrow=c(1,2))
+plot(x= names(pasos_week),y=pasos_week, type = "l", xlab = "Time", ylab = "Steps", col="blue", ylim = c(0,200), main = "WEEKDAY")
+
+plot(x= names(pasos_weekend),y=pasos_weekend, type = "l", xlab = "Time", ylab = "Steps", col="red", ylim = c(0,200), main = "WEEKEND")
+
+```
